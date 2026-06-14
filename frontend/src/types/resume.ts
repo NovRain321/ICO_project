@@ -1,0 +1,45 @@
+// 案件研判响应类型
+export interface ResumeAnalysisResponse {
+  overallScore: number;
+  scoreDetail: ScoreDetail;
+  summary: string;
+  strengths: string[];
+  suggestions: Suggestion[];
+  originalText: string;
+}
+
+// 存储信息
+export interface StorageInfo {
+  fileKey: string;
+  fileUrl: string;
+  resumeId?: number;
+}
+
+// 上传API完整响应（异步模式：analysis 可能为空）
+export interface UploadResponse {
+  analysis?: ResumeAnalysisResponse;
+  storage: StorageInfo;
+  duplicate?: boolean;
+  message?: string;
+}
+
+export interface ScoreDetail {
+  contentScore: number;      // 材料完整性 (0-15)
+  structureScore: number;    // 描述清晰度 (0-15)
+  skillMatchScore: number;   // 法规适配度 (0-20)
+  expressionScore: number;   // 研判规范性 (0-10)
+  projectScore: number;      // 案情复杂度 (0-40)
+}
+
+export interface Suggestion {
+  category: string;         // 建议类别
+  priority: '高' | '中' | '低';
+  issue: string;            // 问题描述
+  recommendation: string;   // 具体建议
+}
+
+export interface ApiError {
+  error: string;
+  detectedType?: string;
+  allowedTypes?: string[];
+}
