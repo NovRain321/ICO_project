@@ -1,440 +1,357 @@
-<div align="center">
+# AI 交通警情分析平台项目介绍
+## 1. 项目概述
+AI 交通警情分析平台是一个面向交警部门事故处理、违法研判和案件复盘场景的智能辅助系统。系统围绕交通案件材料解析、AI 案情研判、RAG 相似案例检索、交通法规知识问答、案件复盘推演和 PDF 研判报告导出构建完整业务闭环，帮助民警快速梳理案情、匹配历史案例、识别证据缺口并形成规范化处置建议。
 
-**智能 AI 面试官平台** - 基于大语言模型的简历分析和模拟面试系统
+该项目的核心能力不是视频识别、车牌识别或地图轨迹分析，而是聚焦于交通案件文本材料、法规文档和历史案例的智能处理。系统通过大语言模型和向量检索技术，将事故认定书、询问笔录、现场勘查记录、执法规范、典型案例等文本资料进行结构化理解和检索增强生成。
 
-[![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk)](https://openjdk.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0-green?logo=springboot)](https://spring.io/projects/spring-boot)
-[![React](https://img.shields.io/badge/React-18.3-blue?logo=react)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-336791?logo=postgresql)](https://www.postgresql.org/)
+## 2. 技术栈
+### 后端技术栈
+| 技术 | 作用 |
+| --- | --- |
+| Java 21 | 后端开发语言，支持虚拟线程提升 I/O 并发能力 |
+| Spring Boot | 后端 Web 应用框架 |
+| Spring AI | 对接大模型与 Embedding 模型 |
+| PostgreSQL | 存储案件、分析结果、复盘记录、知识库元数据 |
+| pgvector | 存储法规、案例、规范文档的向量数据 |
+| Redis / Redisson | 缓存、分布式能力、Redis Stream 异步任务 |
+| Redis Stream | 案件分析、知识库向量化、报告生成等异步任务处理 |
+| Apache Tika | 解析 PDF、DOCX、TXT 等案件材料 |
+| S3 / MinIO | 存储上传的案件材料和知识库文件 |
+| iText | 导出中文 PDF 警情研判报告 |
+| MapStruct | DTO 与实体对象转换 |
+| Docker Compose | 本地基础设施编排 |
 
 
-</div>
+### 前端技术栈
+| 技术 | 作用 |
+| --- | --- |
+| React | 前端 UI 框架 |
+| TypeScript | 类型约束与工程化开发 |
+| Vite | 前端构建工具 |
+| Tailwind CSS | 页面样式 |
+| React Router | 页面路由 |
+| Framer Motion | 页面动效 |
+| Recharts | 分析结果可视化 |
+| React Markdown | RAG 问答 Markdown 渲染 |
+| React Virtuoso | 长对话虚拟列表优化 |
+| Lucide React | 图标库 |
 
 
----
+## 3. 系统整体架构
+系统采用前后端分离架构，前端负责案件录入、案件库、复盘推演、知识库管理和流式问答展示，后端提供 REST API、SSE 流式接口、AI 调用、文件解析、异步任务和数据持久化能力。
 
-## 项目介绍
+整体链路如下：
 
-InterviewGuide 是一个集成了简历分析、模拟面试和知识库管理的智能面试辅助平台。系统利用大语言模型（LLM）和向量数据库技术，为求职者和 HR 提供智能化的简历评估和面试练习服务。
-
-## 系统架构
-
-**提示**：架构图采用 draw.io 绘制，导出为 svg 格式，在 Github Dark 模式下的显示效果会有问题。
-
-![](https://oss.javaguide.cn/xingqiu/pratical-project/interview-guide/interview-guide-architecture-diagram.svg)
-
-**异步处理流程**：
-
-简历分析、知识库向量化和面试报告生成采用 Redis Stream 异步处理，这里以简历分析和知识库向量化为例介绍一下整体流程：
-
-```
-上传请求 → 保存文件 → 发送消息到 Stream → 立即返回
-                              ↓
-                      Consumer 消费消息
-                              ↓
-                    执行分析/向量化任务
-                              ↓
-                      更新数据库状态
-                              ↓
-                   前端轮询获取最新状态
-```
-
-状态流转： `PENDING` → `PROCESSING` → `COMPLETED` / `FAILED`。
-
-## 配套教程
-
-本项目承诺**完整功能免费开源**，也不会做所谓的 Pro 版或“付费解锁核心功能”之类的设计。
-
-如果你想学习这个项目，或者希望把它作为个人项目经历 / 毕设选题，我也整理了一套相对细致的教程：从基础设施搭建、核心业务实现，到最后如何在面试中讲清楚思路与亮点，尽量把容易卡住的地方讲透。
-
-如果你确实需要更系统的辅导，可以点这里了解详情（**教程为付费内容**，主要是想覆盖一些时间成本，望理解，感谢支持）：[《SpringAI 智能面试平台+RAG 知识库》](https://javaguide.cn/zhuanlan/interview-guide.html)。
-
-## 技术栈
-
-### 后端技术
-
-| 技术                  | 版本  | 说明                      |
-| --------------------- | ----- | ------------------------- |
-| Spring Boot           | 4.0   | 应用框架                  |
-| Java                  | 21    | 开发语言                  |
-| Spring AI             | 2.0   | AI 集成框架               |
-| PostgreSQL + pgvector | 14+   | 关系数据库 + 向量存储     |
-| Redis                 | 6+    | 缓存 + 消息队列（Stream） |
-| Apache Tika           | 2.9.2 | 文档解析                  |
-| iText 8               | 8.0.5 | PDF 导出                  |
-| MapStruct             | 1.6.3 | 对象映射                  |
-| Gradle                | 8.14  | 构建工具                  |
-
-技术选型常见问题解答：
-
-1. 数据存储为什么选择 PostgreSQL + pgvector？PG 的向量数据存储功能够用了，精简架构，不想引入太多组件。
-2. 为什么引入 Redis？
-   - Redis 替代 `ConcurrentHashMap` 实现面试会话的缓存。
-   - 基于 Redis Stream 实现简历分析、知识库向量化等场景的异步（还能解耦，分析和向量化可以使用其他编程语言来做）。不使用 [Kafka](https://javaguide.cn/high-performance/message-queue/kafka-questions-01.html) 这类成熟的消息队列，也是不想引入太多组件。
-3. 构建工具为什么选择 Gradle？个人更喜欢用 Gradle，也写过相关的文章：[Gradle核心概念总结](https://javaguide.cn/tools/gradle/gradle-core-concepts.html)。
-
-### 前端技术
-
-| 技术          | 版本  | 说明     |
-| ------------- | ----- | -------- |
-| React         | 18.3  | UI 框架  |
-| TypeScript    | 5.6   | 开发语言 |
-| Vite          | 5.4   | 构建工具 |
-| Tailwind CSS  | 4.1   | 样式框架 |
-| React Router  | 7.11  | 路由管理 |
-| Framer Motion | 12.23 | 动画库   |
-| Recharts      | 3.6   | 图表库   |
-| Lucide React  | 0.468 | 图标库   |
-
-## 功能特性
-
-### 简历管理模块
-
-- **多格式解析**：支持 PDF、DOCX、DOC、TXT 等多种简历格式。
-- **异步处理流**：基于 Redis Stream 实现异步简历分析，支持实时查看处理进度（待分析/分析中/已完成/失败）。
-- **稳定性保障**：内置分析失败自动重试机制（最多 3 次）与基于内容哈希的重复检测。
-- **分析报告导出**：支持将 AI 分析结果一键导出为结构化的 PDF 简历分析报告。
-
-### 模拟面试模块
-
-- **个性化出题**：基于简历内容智能生成针对性的面试题目，支持实时问答交互。
-- **智能追问流**：支持配置多轮智能追问（默认 1 条），构建模拟真实场景的线性问答流。
-- **分批评估机制**：创新性采用分批评估策略，有效规避大模型 Token 溢出风险，确保长文本评估稳定性。
-- **智能汇总建议**：对分批评估结果进行二次汇总，提供多维度的改进建议、表现趋势与统计信息。
-- **报告一键导出**：支持异步生成并导出详细的 PDF 模拟面试评估报告。
-
-### 知识库管理模块
-
-- **文档智能处理**：支持 PDF、DOCX、Markdown 等多种格式文档的自动上传、分块与异步向量化。
-- **RAG 检索增强**：集成向量数据库，通过检索增强生成（RAG）提升 AI 问答的准确性与专业度。
-- **流式响应交互**：基于 SSE（Server-Sent Events）技术实现打字机式流式响应。
-- **智能问答对话**：支持基于知识库内容的智能问答，并提供直观的知识库统计信息。
-
-### TODO
-
-- [x] 问答助手的 Markdown 展示优化
-- [x] 知识库管理页面的知识库下载
-- [x] 异步生成模拟面试评估报告
-- [x] Docker 快速部署
-- [x] 添加 API 限流保护
-- [x] 前端性能优化（RAG 聊天 - 虚拟列表）
-- [x] 模拟面试增加追问功能
-- [ ] 打通模拟面试和知识库
-
-## 效果展示
-
-### 简历与面试
-
-简历库：
-
-![](https://oss.javaguide.cn/xingqiu/pratical-project/interview-guide/page-resume-history.png)
-
-简历上传分析：
-
-![](https://oss.javaguide.cn/xingqiu/pratical-project/interview-guide/page-resume-upload-analysis.png)
-
-简历分析详情：
-
-![](https://oss.javaguide.cn/xingqiu/pratical-project/interview-guide/page-resume-analysis-detail.png)
-
-面试记录：
-
-![](https://oss.javaguide.cn/xingqiu/pratical-project/interview-guide/page-interview-history.png)
-
-面试详情：
-
-![](https://oss.javaguide.cn/xingqiu/pratical-project/interview-guide/page-interview-detail.png)
-
-模拟面试：
-
-![](https://oss.javaguide.cn/xingqiu/pratical-project/interview-guide/page-mock-interview.png)
-
-### 知识库
-
-知识库管理：
-
-![](https://oss.javaguide.cn/xingqiu/pratical-project/interview-guide/page-knowledge-base-management.png)
-
-问答助手：
-
-![page-qa-assistant](https://oss.javaguide.cn/xingqiu/pratical-project/interview-guide/page-qa-assistant.png)
-
-## 项目结构
-
-```
-interview-guide/
-├── app/                              # 后端应用
-│   ├── src/main/java/interview/guide/
-│   │   ├── App.java                  # 主启动类
-│   │   ├── common/                   # 通用模块
-│   │   │   ├── config/               # 配置类
-│   │   │   ├── exception/            # 异常处理
-│   │   │   └── result/               # 统一响应
-│   │   ├── infrastructure/           # 基础设施
-│   │   │   ├── export/               # PDF 导出
-│   │   │   ├── file/                 # 文件处理
-│   │   │   ├── redis/                # Redis 服务
-│   │   │   └── storage/              # 对象存储
-│   │   └── modules/                  # 业务模块
-│   │       ├── interview/            # 面试模块
-│   │       ├── knowledgebase/        # 知识库模块
-│   │       └── resume/               # 简历模块
-│   └── src/main/resources/
-│       ├── application.yml           # 应用配置
-│       └── prompts/                  # AI 提示词模板
-│
-├── frontend/                         # 前端应用
-│   ├── src/
-│   │   ├── api/                      # API 接口
-│   │   ├── components/               # 公共组件
-│   │   ├── pages/                    # 页面组件
-│   │   ├── types/                    # 类型定义
-│   │   └── utils/                    # 工具函数
-│   ├── package.json
-│   └── vite.config.ts
-│
-└── README.md
+```latex
+用户上传案件材料
+        ↓
+文件校验与内容哈希去重
+        ↓
+Apache Tika 解析案件文本
+        ↓
+案件材料存入 S3/MinIO
+        ↓
+案件元数据写入 PostgreSQL
+        ↓
+Redis Stream 投递 AI 案情分析任务
+        ↓
+Consumer 异步调用大模型分析
+        ↓
+保存案情研判结果
+        ↓
+前端轮询展示分析状态与报告
 ```
 
-## 快速开始
+知识库链路如下：
 
-环境要求：
-
-| 依赖          | 版本 | 必需 |
-| ------------- | ---- | ---- |
-| JDK           | 21+  | 是   |
-| Node.js       | 18+  | 是   |
-| PostgreSQL    | 14+  | 是   |
-| pgvector 扩展 | -    | 是   |
-| Redis         | 6+   | 是   |
-| S3 兼容存储   | -    | 是   |
-
-### 1. 克隆项目
-
-```bash
-git clone https://github.com/Snailclimb/interview-guide.git
-cd interview-guide
+```latex
+上传法规/案例/规范文档
+        ↓
+解析文档文本
+        ↓
+TokenTextSplitter 文本分块
+        ↓
+Embedding 模型生成向量
+        ↓
+pgvector 存储向量和 metadata
+        ↓
+基于当前案情进行相似案例检索
+        ↓
+大模型结合检索内容生成回答
 ```
 
-### 2. 配置数据库
+## 4. 核心模块设计
+### 4.1 交通案件录入与材料解析模块
+用户可以上传事故认定书、询问笔录、现场勘查记录、执法记录文本、事故经过说明等材料。系统会对文件进行大小校验、类型校验和内容哈希计算，避免重复上传同一份材料。
 
-```sql
--- 创建数据库
-CREATE DATABASE interview_guide;
+文件解析使用 Apache Tika 实现，支持 PDF、DOCX、DOC、TXT 等格式。解析完成后，系统会对文本进行清洗，去除图片路径、临时文件路径、分隔符、异常空行等无效内容，形成适合大模型分析和 RAG 检索的案件文本。
 
--- 连接数据库并启用 pgvector 扩展（可选，启动后端SpringAI框架底层会自动创建）
-CREATE EXTENSION vector;
+该模块的核心价值：
+
++ 降低人工录入案件材料的成本。
++ 支持多格式执法文档解析。
++ 通过哈希去重避免重复分析。
++ 为后续 AI 研判和相似案例检索提供高质量文本输入。
+
+### 4.2 AI 案情研判模块
+用户上传案件材料后，系统异步调用大模型生成结构化研判结果。分析内容包括：
+
++ 案情摘要：概括案件发生时间、地点、涉事对象、事故经过和处理结果。
++ 关键事实：提取车辆类型、行驶方向、信号灯状态、天气路况、人员伤亡等要素。
++ 责任争议点：识别可能影响责任认定的关键分歧。
++ 违法行为线索：识别闯红灯、逆行、酒驾、超速、未礼让行人等线索。
++ 证据缺口：提示需要补充的监控、笔录、照片、检测报告等。
++ 处置建议：给出下一步调查、取证和处理建议。
+
+原系统中的五个评分维度可以映射为交通警情研判维度：
+
+| 原评分维度 | 交通警情维度 |
+| --- | --- |
+| 项目经验评分 | 案情复杂度与责任要素识别 |
+| 技能匹配度 | 法规适配度 |
+| 内容完整性 | 案件材料完整性 |
+| 结构清晰度 | 案情描述结构清晰度 |
+| 表达专业性 | 研判结论规范性 |
+
+
+### 4.3 案件库与案件详情模块
+案件库保存所有上传过的交通案件材料，用户可以查看案件名称、上传时间、文件大小、案情分析状态、AI 研判评分和复盘记录数量。
+
+案件详情页展示：
+
++ 原始案件材料文本。
++ AI 案情研判结果。
++ 多维度评分。
++ 风险提示与处置建议。
++ 历史复盘记录。
++ PDF 研判报告导出入口。
+
+案件分析状态沿用异步任务状态流转：
+
+```latex
+PENDING → PROCESSING → COMPLETED / FAILED
 ```
 
-### 3. 配置环境变量
+这个设计可以让用户上传后立即得到反馈，不需要同步等待大模型分析完成。
 
-```bash
-# AI API 密钥（阿里云 DashScope）
-export AI_BAILIAN_API_KEY=your_api_key
+### 4.4 责任认定要素核查推演
+
+AI 根据案件材料生成责任认定核查清单
+
+民警逐项填写核查结论
+
+追问机制	对「不确定」「需补充」的项自动追问
+
+核查问题示例：
+
+各方当事人的交通违法行为分别是什么？
+
+违法行为与事故之间的因果关系是否明确？
+
+是否存在路权归属争议？
+
+是否涉及酒驾/毒驾/无证驾驶等加重情节？
+
+伤亡程度是否达到刑事立案标准？
+
+是否需要进行车速鉴定或车辆技术检验？
+
+核心价值：降低责任认定遗漏风险，确保「一案一表」规范化。
+
+### 4.5 责任认定辅助报告生成
+新业务映射
+
+评估民警填写的核查结论是否完整、是否有逻辑矛盾
+
+生成《交通事故责任认定辅助分析报告》
+
+报告内容：已确认事实/待补充证据/责任划分建议/程序风险提示
+
+PDF 导出	PDF 导出供内部审批流转
+
+
+
+### 4.6 交通法规与历史案例知识库模块
+
+系统支持上传交通法规、事故责任认定规则、历史典型案例、交警执法规范、内部处置指南等资料。
+
+知识库分类可以包括：
+
++ 道路交通安全法。
++ 事故责任认定规则。
++ 酒驾醉驾案例库。
++ 非机动车事故案例库。
++ 货车超载案例库。
++ 轻微事故快处规范。
++ 典型判例与复议案例。
+
+上传文档后，系统会自动解析文本、分块、调用 Embedding 模型生成向量，并存入 PostgreSQL + pgvector。向量化任务同样通过 Redis Stream 异步执行，前端可以查看向量化状态。
+
+### 4.7 RAG 相似案件检索模块
+
+用户提交当前案件描述后，系统从法规案例库中检索相似内容，并交给大模型生成结构化回答。
+
+返回结果可以包括：
+
++ 相似案件摘要。
++ 匹配原因。
++ 相似事故类型。
++ 相似违法行为。
++ 责任认定参考。
++ 证据差异。
++ 可参考处置方式。
+
+RAG 检索流程如下：
+
+```latex
+用户输入当前案情
+        ↓
+Query Rewrite 改写检索问题
+        ↓
+根据问题长度动态调整 topK 和相似度阈值
+        ↓
+pgvector 相似度检索
+        ↓
+过滤弱相关结果
+        ↓
+构建上下文 Prompt
+        ↓
+大模型生成回答
 ```
 
-### 4. 修改应用配置
+该模块的技术亮点：
 
-编辑 `app/src/main/resources/application.yml`：
++ 支持多知识库联合检索。
++ 使用 metadata 过滤指定知识库。
++ 对短查询和口语化问题做 Query Rewrite。
++ 动态调整 topK 和 minScore。
++ 对弱相关结果进行过滤，减少模型无依据生成。
 
-```yaml
-spring:
-  # PostgreSQL数据库配置
-  datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:interview_guide}
-    username: ${POSTGRES_USER:postgres}
-    password: ${POSTGRES_PASSWORD:123456}
-    driver-class-name: org.postgresql.Driver
+### 4.8 交通法规问答助手模块
 
-  jpa:
-    hibernate:
-      ddl-auto: create #首次启动用 create，表创建成功后，改回 update
+用户可以像聊天一样询问交通法规和处置规范，例如：
 
-  # Redisson配置 (使用 spring.redis.redisson，参考官方文档)
-  redis:
-    redisson:
-      config: |
-        singleServerConfig:
-          address: "redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}"
-          database: 0
-          connectionMinimumIdleSize: 10
-          connectionPoolSize: 64
-          subscriptionConnectionMinimumIdleSize: 1
-          subscriptionConnectionPoolSize: 50
++ 电动车逆行与机动车碰撞如何认定责任？
++ 轻微剐蹭后离开现场是否构成逃逸？
++ 酒驾事故处理流程是什么？
++ 无监控情况下如何补强证据链？
++ 行人闯红灯被撞如何分析责任？
 
-# RustFS (S3兼容) 存储配置
-app:
-  # 面试配置
-  interview:
-    follow-up-count: ${APP_INTERVIEW_FOLLOW_UP_COUNT:1}    # 每个主问题生成追问数量
-    evaluation:
-      batch-size: ${APP_INTERVIEW_EVALUATION_BATCH_SIZE:8} # 回答评估分批大小
-  storage:
-    endpoint: ${APP_STORAGE_ENDPOINT:http://localhost:9000}
-    access-key: ${APP_STORAGE_ACCESS_KEY:wr45VXJZhCxc6FAWz0YR}
-    secret-key: ${APP_STORAGE_SECRET_KEY:GtKxV57WJkpw4CvASPBzTy2DYElLnRqh8dIXQa0m}
-    bucket: ${APP_STORAGE_BUCKET:interview-guide}
-    region: ${APP_STORAGE_REGION:us-east-1}
+系统基于知识库内容通过 SSE 流式返回答案，并保存会话历史。
 
+会话能力包括：
 
++ 创建新会话。
++ 多轮问答。
++ 会话置顶。
++ 会话重命名。
++ 删除会话。
++ 关联多个知识库。
 
+前端使用虚拟列表优化长对话渲染，避免消息过多导致页面卡顿。
+
+### 4.9 异步任务与稳定性保障模块
+系统将大模型调用和向量化等耗时操作全部异步化，避免主请求阻塞。
+
+异步任务包括：
+
++ 案件材料 AI 分析。
++ 法规案例库向量化。
++ 警情研判报告生成。
+
+Redis Stream 消费者统一封装：
+
++ 消费者组创建。
++ 消息读取。
++ ACK 确认。
++ 失败重试。
++ 状态更新。
++ 错误信息截断。
++ 消费者生命周期管理。
+
+系统还实现了注解式限流组件，基于 Spring AOP + Redis Lua 实现多维度滑动窗口限流，用于保护文件上传、AI 分析、知识库问答等高成本接口。
+
+## 5. 核心业务流程
+### 5.1 案件分析流程
+```latex
+上传交通案件材料
+        ↓
+文件校验、类型识别、哈希去重
+        ↓
+Apache Tika 解析文本
+        ↓
+文件存入 S3/MinIO
+        ↓
+案件数据保存到 PostgreSQL
+        ↓
+Redis Stream 投递案情分析任务
+        ↓
+Consumer 异步调用大模型
+        ↓
+保存案情分析结果
+        ↓
+前端展示研判结果与评分
 ```
 
-⚠️**注意**：
-
-1.  JPA 的 `ddl-auto` 首次启动用 `create`，表创建成功后，改回 `update`。
-2. 如果本地已经 Minio 的话，可以用其替换 RusfFS。
-
-### 5. 启动服务
-
-**后端：**
-
-```bash
-./gradlew bootRun
+### 5.2 相似案件检索流程
+```latex
+选择法规/案例知识库
+        ↓
+输入当前案件描述
+        ↓
+Query Rewrite 优化查询语义
+        ↓
+pgvector 相似度检索
+        ↓
+组合相似案例与法规上下文
+        ↓
+大模型生成参考分析
+        ↓
+SSE 流式返回答案
 ```
 
-后端服务启动于 `http://localhost:8080`
-
-**前端：**
-
-```bash
-cd frontend
-pnpm install
-pnpm dev
+### 5.3 案件复盘报告流程
+```latex
+根据案件材料生成复盘问题
+        ↓
+用户填写研判意见
+        ↓
+提交复盘结果
+        ↓
+Redis Stream 投递评估任务
+        ↓
+分批调用大模型评估
+        ↓
+二次汇总生成综合结论
+        ↓
+保存报告并支持 PDF 导出
 ```
 
-前端服务启动于 `http://localhost:5173`
+## 6. 项目技术亮点
+1. 使用 Spring AI 接入大模型能力，将交通案件材料转化为结构化研判结果。
+2. 基于 PostgreSQL + pgvector 构建交通法规与历史案例 RAG 知识库，实现相似案件检索。
+3. 使用 Redis Stream 将案件分析、知识库向量化、报告生成等高耗时任务异步化。
+4. 抽象统一的 Stream 生产者和消费者模板，封装 ACK、重试、状态流转和异常处理。
+5. 使用 Apache Tika 支持多格式案件材料解析，并通过文本清洗提升后续 AI 分析质量。
+6. 通过 SHA-256 文件哈希实现案件材料去重，避免重复存储和重复分析。
+7. 通过 Query Rewrite、动态 topK/minScore 和弱相关过滤提升 RAG 检索质量。
+8. 使用 SSE 实现交通法规问答的流式响应，提升交互体验。
+9. 基于 Spring AOP + Redis Lua 实现注解式限流，保护 AI 高成本接口。
+10. 支持中文 PDF 研判报告导出，适合案件流转和内部汇报场景。
 
 
-## Docker 快速部署
+## 7. 项目边界说明
+该项目主要解决交通案件文本材料的智能分析问题，不具备以下能力:
 
-本项目提供了完整的 Docker 支持，可以一键启动所有服务（前后端、数据库、中间件）。
++ 实时视频识别。
++ 车牌识别。
++ 地图轨迹分析。
++ 事故现场图片视觉识别。
++ 与交警内网系统真实打通。
 
-### 1. 前置准备
-- 安装 [Docker](https://www.docker.com/products/docker-desktop/) 和 Docker Compose
-- 申请阿里云百炼 API Key（用于 AI 对话功能）
+面试时建议强调系统核心是：
 
-### 2. 快速启动
-在项目根目录下执行：
-
-```bash
-# 1. 复制环境变量配置文件
-cp .env.example .env
-
-# 2. 编辑 .env 文件，填入 AI 配置
-# vim .env
-# 必填：AI_BAILIAN_API_KEY=your_key_here
-# 可选：AI_MODEL=qwen-plus        # 默认值为 qwen-plus
-#        # 也可以改为 qwen-max、qwen-long 等其他可用模型
-#
-# 面试参数配置（可选）：
-# APP_INTERVIEW_FOLLOW_UP_COUNT=1         # 每个主问题生成追问数量（默认 1）
-# APP_INTERVIEW_EVALUATION_BATCH_SIZE=8   # 回答评估分批大小（默认 8）
-
-# 3. 构建并启动所有服务
-docker-compose up -d --build
+```latex
+文本案件材料解析 + RAG 相似案例检索 + 大模型辅助研判 + Redis Stream 异步任务工程化
 ```
 
-### 3. 服务访问
-启动完成后，您可以通过以下地址访问各个服务：
-
-| 服务             | 地址                                           | 默认账号     | 默认密码     | 说明                   |
-| ---------------- | ---------------------------------------------- | ------------ | ------------ | ---------------------- |
-| **前端应用**     | [http://localhost](http://localhost)           | -            | -            | 用户访问入口           |
-| **后端 API**     | [http://localhost:8080](http://localhost:8080) | -            | -            | Swagger/接口文档       |
-| **MinIO 控制台** | [http://localhost:9001](http://localhost:9001) | `minioadmin` | `minioadmin` | 对象存储管理           |
-| **MinIO API**    | `localhost:9000`                               | -            | -            | S3 兼容接口            |
-| **PostgreSQL**   | `localhost:5432`                               | `postgres`   | `password`   | 数据库 (包含 pgvector) |
-| **Redis**        | `localhost:6379`                               | -            | -            | 缓存与消息队列         |
-
-### 4. 常用运维命令
-
-```bash
-# 查看服务状态
-docker-compose ps
-
-# 查看后端日志
-docker-compose logs -f app
-
-# 停止并移除所有服务
-docker-compose down
-
-# 清理无用镜像（构建产生的中间层）
-docker image prune -f
-```
-
-## 使用场景
-
-| 用户角色        | 使用场景                               |
-| --------------- | -------------------------------------- |
-| **求职者**      | 上传简历获取分析建议，进行模拟面试练习 |
-| **HR/招聘人员** | 批量分析简历，评估候选人能力           |
-| **培训机构**    | 提供面试培训服务，管理知识库资源       |
-
-## 常见问题
-
-### Q: 数据库表创建失败/数据丢失
-
-这大概率是 JPA 的 `ddl-auto` 配置不对的原因。`ddl-auto` 模式对比：
-
-| 模式     | 行为                            | 适用场景      |
-| -------- | ------------------------------- | ------------- |
-| create   | 无条件删除并重建所有表          | 开发/测试环境 |
-| update   | 对比现有 schema，只执行增量更新 | 开发环境      |
-| validate | 只验证，不修改                  | 生产环境      |
-| none     | 什么都不做                      | 生产环境      |
-
-对于新数据库，推荐：
-
-```yaml
-# 首次启动用 create
-jpa:
-  hibernate:
-    ddl-auto: create
-
-# 表创建成功后，改回 update
-jpa:
-  hibernate:
-    ddl-auto: update
-```
-
-记得改回 **update**，否则每次重启都会删除所有数据！
-
-### Q: 知识库向量化失败
-
-当 `initialize-schema: false` 时，Spring AI **不会自动创建** `vector_store` 表。
-
-```java
-spring:
-  ai:
-    vectorstore:
-      pgvector:
-        initialize-schema: true 
-
-```
-
-建议开发环境设置为 true，方便快速启动。生产环境设置为 false，手动管理数据库 schema，避免意外变更。
-
-### Q: 简历分析失败
-
-检查一下阿里云 DashScope API KEY 是否配置正确（申请地址：<https://bailian.console.aliyun.com/>）。
-
-### Q: 简历分析一直显示"分析中"？
-
-检查 Redis 连接和 Stream Consumer 是否正常运行。查看后端日志确认是否有错误。
-
-### Q: PDF 导出失败或中文显示异常？
-
-项目已内置中文字体（珠圆玉润仿宋），支持跨平台导出。如遇到问题，请检查：
-- 字体文件是否存在：`app/src/main/resources/fonts/ZhuqueFangsong-Regular.ttf`
-- 检查日志中的字体加载信息
-- 确认 iText 依赖是否正确
-
-## 贡献
-
-欢迎提交 Issue 和 Pull Request！
-
-## 许可证
-
-AGPL-3.0 License（只要通过网络提供服务，就必须向用户公开修改后的源码）
