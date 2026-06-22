@@ -53,7 +53,7 @@ spring:
   ai:
     openai:
       base-url: https://token-plan-cn.xiaomimimo.com/v1
-      api-key: tp-cnvjk05xvr8f0qkva4r51o6r0m3l5fi3lnkiaxkmgmyqh7wy
+      api-key: {your-api-key}
       chat:
         options:
           model: ${AI_MODEL:MiMo-V2.5-Pro}
